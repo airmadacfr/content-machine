@@ -24,7 +24,7 @@ export default async function handler(req, res) {
         contents: [{ parts: [{ text: prompt }] }],
         generationConfig: {
           temperature: 1,
-          maxOutputTokens: 1024,
+          maxOutputTokens: 2048,
         },
       }),
     });
@@ -35,11 +35,21 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: data.error.message || "Erreur API Gemini" });
     }
 
-    if (!data.candidates || !data.candidates[0]?.content?.parts?.[0]?.text) {
+    if (!data.candidates || !data.candidates[0]?.content?.parts) {
       return res.status(500).json({ error: "Réponse vide de Gemini. Réessaie." });
     }
 
-    const text = data.candidates[0].content.parts[0].text.trim();
+    // Extract only text parts (skip thinking parts)
+    const textParts = data.candidates[0].content.parts
+      .filter(part => part.text && !part.thought)
+      .map(part => part.text);
+
+    const text = textParts.join("\n").trim();
+
+    if (!text) {
+      return res.status(500).json({ error: "Réponse vide après filtrage. Réessaie." });
+    }
+
     return res.status(200).json({ text });
   } catch (err) {
     return res.status(500).json({ error: "Erreur serveur: " + err.message });
