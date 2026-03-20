@@ -15,6 +15,11 @@ function stripEmojis(text) {
     .trim();
 }
 
+function extractMentions(text) {
+  const matches = text.match(/@[\w]+/g);
+  return matches ? [...new Set(matches)] : [];
+}
+
 export default function Home() {
   const [step, setStep] = useState(STEPS.INPUT);
   const [tweet, setTweet] = useState("");
@@ -55,6 +60,8 @@ export default function Home() {
       const lowerTweet = tweet.trim().toLowerCase();
       const isOfficiel = lowerTweet.startsWith("officiel");
       const isBreaking = lowerTweet.startsWith("breaking");
+      const mentions = extractMentions(tweet);
+      const hasSources = mentions.length > 0;
 
       setProgress({ stage: "Écriture du script...", percent: 20 });
 
@@ -67,6 +74,8 @@ TWEET (nettoyé) :
 
 ${isOfficiel ? "Le tweet commence par 'OFFICIEL' → tu peux utiliser le mot 'officiel' dans le script." : "Le tweet NE commence PAS par 'officiel' → N'UTILISE JAMAIS le mot 'officiel' dans le script."}
 ${isBreaking ? "Le tweet commence par 'BREAKING' → utilise le terme 'polémique' ou 'info de dernière minute' dans le hook." : ""}
+${hasSources ? `SOURCES DÉTECTÉES DANS LE TWEET : ${mentions.join(", ")}
+RÈGLE OBLIGATOIRE : Tu DOIS mentionner la ou les sources dans le script. Par exemple : "d'après ${mentions[0]}" ou "selon ${mentions[0]}". La source doit apparaître naturellement dans le développement de l'info.` : ""}
 
 STRUCTURE EXACTE DU SCRIPT :
 
@@ -86,11 +95,13 @@ PARAGRAPHE 2 — CTA ABONNEMENT (toujours ce texte exact, mot pour mot)
 
 PARAGRAPHE 3 — DÉVELOPPEMENT DE L'INFO (corps du script)
 Raconte l'info du tweet en détail. Phrases courtes, dynamiques. Vocabulaire foot (transfert, mercato, buteur, passeur, Bernabéu, Florentino, etc.). Tu RELAIES UNIQUEMENT l'info du tweet, pas de divagation.
+${hasSources ? `IMPORTANT : Mentionne la source (${mentions.join(", ")}) dans ce paragraphe de manière naturelle, par exemple "d'après ${mentions[0]}" ou "selon les informations de ${mentions[0]}".` : ""}
 
 PARAGRAPHE 4 — CONCLUSION + QUESTION
-Termine par une phrase de conclusion puis une QUESTION SIMPLE qui incite les viewers à commenter. La question doit être directe, clivante, facile à répondre.
+Termine par une phrase de conclusion puis une QUESTION SIMPLE qui incite les viewers à commenter. La question doit être directe, clivante, facile à répondre. La question UTILISE LE TUTOIEMENT pour impliquer directement le viewer. Exemples : "Tu penses que c'est le bon choix ?", "Pour toi, il mérite sa place ?", "Tu y crois ou pas ?"
 
 RÈGLES :
+- TUTOIEMENT obligatoire quand tu t'adresses aux viewers (dans le hook, la question finale, et partout où c'est pertinent). Exemples : "tu ne vas pas en revenir", "regarde bien ce qui se passe", "dis-moi en commentaire"
 - Appelle les joueurs par leur NOM DE FAMILLE (Mbappé, Vinicius, Bellingham) ou Prénom + Nom. JAMAIS juste le prénom.
 - Dis "Real Madrid" et pas "Casa Blanca"
 - JAMAIS d'emojis dans le script
@@ -130,7 +141,7 @@ Réponds UNIQUEMENT en JSON valide (exactement ${imgCount} éléments), sans bac
 
       let cleanJson = imgResult.replace(/```json|```/g, "").trim();
       const jsonMatch = cleanJson.match(/\[[\s\S]*\]/);
-        if (!jsonMatch) throw new Error("Format d'images invalide. Réessaie.");
+      if (!jsonMatch) throw new Error("Format d'images invalide. Réessaie.");
       const parsed = JSON.parse(jsonMatch[0]);
       setImageLinks(parsed.map(item => ({
         label: item.label,
@@ -201,7 +212,8 @@ Réponds UNIQUEMENT en JSON valide (exactement ${imgCount} éléments), sans bac
                   <span>
                     {tweet.toLowerCase().startsWith("officiel") && "🟢 Mode OFFICIEL détecté"}
                     {tweet.toLowerCase().startsWith("breaking") && "🔴 Mode BREAKING détecté"}
-                    {!tweet.toLowerCase().startsWith("officiel") && !tweet.toLowerCase().startsWith("breaking") && tweet.trim() ? "Emojis retirés automatiquement" : ""}
+                    {extractMentions(tweet).length > 0 && `📡 Source${extractMentions(tweet).length > 1 ? "s" : ""} : ${extractMentions(tweet).join(", ")}`}
+                    {!tweet.toLowerCase().startsWith("officiel") && !tweet.toLowerCase().startsWith("breaking") && extractMentions(tweet).length === 0 && tweet.trim() ? "Emojis retirés automatiquement" : ""}
                   </span>
                   <span>{tweet.length > 0 ? `${tweet.length} car.` : ""}</span>
                 </div>
@@ -229,7 +241,7 @@ Réponds UNIQUEMENT en JSON valide (exactement ${imgCount} éléments), sans bac
                 <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", fontSize: 22, fontWeight: 800, color: AL }}>{progress.percent}%</div>
               </div>
               <p style={{ fontSize: 15, fontWeight: 600, color: "rgba(255,255,255,0.65)" }}>{progress.stage}</p>
-              <p style={{ fontSize: 12, color: "rgba(255,255,255,0.2)", marginTop: 6 }}>Gemini 2.5 Pro en action...</p>
+              <p style={{ fontSize: 12, color: "rgba(255,255,255,0.2)", marginTop: 6 }}>Gemini 2.5 Flash en action...</p>
             </div>
           )}
 
