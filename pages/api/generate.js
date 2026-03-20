@@ -13,7 +13,7 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: "Prompt manquant." });
   }
 
-  const model = "gemini-2.5-pro-preview-05-06";
+  const model = "gemini-2.5-pro-preview-03-25";
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
   try {
