@@ -128,8 +128,10 @@ RÈGLES :
 Réponds UNIQUEMENT en JSON valide (exactement ${imgCount} éléments), sans backticks, sans commentaire :
 [{"query": "recherche en anglais 2026", "label": "description courte en français"}]`);
 
-      const cleanJson = imgResult.replace(/```json|```/g, "").trim();
-      const parsed = JSON.parse(cleanJson);
+      let cleanJson = imgResult.replace(/```json|```/g, "").trim();
+      const jsonMatch = cleanJson.match(/\[[\s\S]*\]/);
+        if (!jsonMatch) throw new Error("Format d'images invalide. Réessaie.");
+      const parsed = JSON.parse(jsonMatch[0]);
       setImageLinks(parsed.map(item => ({
         label: item.label,
         query: item.query,
